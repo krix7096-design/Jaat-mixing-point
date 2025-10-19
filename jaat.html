@@ -1,457 +1,363 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="hi">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Kannu Jaat Mixer</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚜 Tractor Time Logger + Multi Activity</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#047857">
+<link rel="icon" href="icon-192.png">
 <style>
-  :root{
-    --bg:#0f1720;
-    --card:#0b1220;
-    --accent:#334155;
-    --muted:#94a3b8;
-    --btn:#1e293b;
-    --primary:#60a5fa;
-    --glass: rgba(255,255,255,0.03);
-  }
-  *{box-sizing:border-box;font-family:Inter,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-  body{margin:0;background:linear-gradient(180deg,var(--bg),#071021);color:#cbd5e1;min-height:100vh;padding:18px;}
-  .wrap{max-width:1000px;margin:0 auto;}
-  header{text-align:center;padding:8px 0 20px;}
-  h1{
-    margin:0;
-    font-size:36px;
-    letter-spacing:0.6px;
-    font-family: 'Oswald', sans-serif;
-    transition: color 2s ease-in-out;
-  }
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  .panel{
-    background:var(--card);
-    border-radius:10px;padding:12px;
-    box-shadow:0 6px 20px rgba(2,6,23,0.6);
-    min-height:380px;
-    display:flex;flex-direction:column;
-  }
-  .controls{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
-  .controls input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit}
-  .controls button{padding:8px 10px;border-radius:8px;border:none;background:var(--btn);color:#e6eef8;cursor:pointer}
-  .video-frame{flex:1;background:#000;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-  .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--muted);font-size:13px;}
-  .crossfader{margin:18px 0;background:linear-gradient(90deg,#0b1220 0%,#051021);padding:12px;border-radius:12px;}
-  .slider-row{display:flex;gap:12px;align-items:center;}
-  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;height:8px;background:linear-gradient(90deg,#60a5fa,#34d399);border-radius:8px}
-  .btn-row{display:flex;gap:10px;margin-top:12px;justify-content:center;}
-  .btn{padding:8px 12px;border-radius:999px;border:none;background:var(--primary);color:#042027;cursor:pointer}
-  .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-  .fade-btn{padding:8px 12px;border-radius:999px;border:none;background:var(--primary);color:#042027;cursor:pointer;margin-top:10px;}
-  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
-  .timeline-controls {
-      display: flex;
-      gap: 5px;
-      margin-top: 8px;
-  }
-  .timeline-controls button {
-      padding: 5px 8px;
-      font-size: 12px;
-      border-radius: 5px;
-      border: none;
-      background: var(--btn);
-      color: #e6eef8;
-      cursor: pointer;
-  }
-  @media(max-width:840px){.grid{grid-template-columns:1fr}.wrap{padding:8px)}}
+/* ...same CSS as previous version... */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  text-align: center;
+  margin: 20px;
+  background: #f0fdf4;
+}
+h2 { color: #047857; }
+button, select {
+  padding: 10px 18px;
+  margin: 5px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+#startBtn { background: #10b981; color: white; }
+#stopBtn { background: #ef4444; color: white; }
+#newActBtn { background: #3b82f6; color: white; }
+#clearBtn { background: #f59e0b; color: white; }
+#langSel { float: right; margin-top: -40px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #fff;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+th { background: #d1fae5; }
+.summary-row td {
+  background: #e0e7ff;
+  font-weight: bold;
+  text-align: left;
+  border: none;
+}
+.hr-row td {
+  border-top: 2px solid #111;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+  padding: 0;
+  height: 2px;
+  background: none;
+}
+#summary { margin-top: 15px; font-size: 17px; }
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Kannu Jaat mixing Point</h1>
-  </header>
 
-  <div class="grid">
-    <div class="panel" id="leftPanel">
-      <div class="controls">
-        <input id="leftUrl" placeholder="Left video URL (YouTube)" />
-        <button id="loadLeftBtn">Load</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <button class="btn secondary" id="playLeft">Play</button>
-        <button class="btn secondary" id="pauseLeft">Pause</button>
-      </div>
-      <div class="video-frame" id="leftPlayerWrap">
-        <div style="color:var(--muted);font-size:14px">Left player</div>
-      </div>
-      <div class="timeline-controls">
-        <button onclick="seekVideo('left', -10)">-10s</button>
-        <button onclick="seekVideo('left', 10)">+10s</button>
-        <button onclick="seekVideo('left', 'reset')">Reset</button>
-      </div>
-      <div class="meta"><div>Vol: <span id="leftVolLabel">100</span></div><div id="leftStatus">Idle</div></div>
-    </div>
+<select id="langSel">
+  <option value="hi">🇮🇳 हिन्दी</option>
+  <option value="en">🇬🇧 English</option>
+</select>
 
-    <div class="panel" id="rightPanel">
-      <div class="controls">
-        <input id="rightUrl" placeholder="Right video URL (YouTube)" />
-        <button id="loadRightBtn">Load</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <button class="btn secondary" id="playRight">Play</button>
-        <button class="btn secondary" id="pauseRight">Pause</button>
-      </div>
-      <div class="video-frame" id="rightPlayerWrap">
-        <div style="color:var(--muted);font-size:14px">Right player</div>
-      </div>
-      <div class="timeline-controls">
-        <button onclick="seekVideo('right', -10)">-10s</button>
-        <button onclick="seekVideo('right', 10)">+10s</button>
-        <button onclick="seekVideo('right', 'reset')">Reset</button>
-      </div>
-      <div class="meta"><div>Vol: <span id="rightVolLabel">0</span></div><div id="rightStatus">Idle</div></div>
-    </div>
-  </div>
+<h2 id="mainHeading">🚜 ट्रैक्टर वर्क लॉगर + ₹25/मिनट</h2>
 
-  <div class="crossfader">
-    <div class="slider-row">
-      <div style="width:56px;text-align:center;font-size:13px;color:var(--muted)">Left</div>
-      <input id="crossfade" type="range" min="0" max="100" value="0" />
-      <div style="width:56px;text-align:center;font-size:13px;color:var(--muted)">Right</div>
-    </div>
+<button id="newActBtn"></button>
+<button id="startBtn"></button>
+<button id="stopBtn"></button>
+<button id="clearBtn"></button>
 
-    <div class="btn-row">
-      <button class="btn" id="playBoth">Play Both</button>
-      <button class="btn secondary" id="pauseBoth">Pause Both</button>
-      <button class="btn secondary" id="swapLR">Swap L ↔ R</button>
-      <button class="btn fade-btn" onclick="smoothCrossfadeLeft()">Fade Left</button>
-      <button class="btn fade-btn" onclick="smoothCrossfadeRight()">Fade Right</button>
-    </div>
-  </div>
+<table id="logTable">
+  <tr>
+    <th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+  </tr>
+</table>
 
-  <footer>Serve this file over <strong>http(s)</strong> for reliable embedding. Local server recommended.</footer>
-</div>
+<div id="summary"></div>
 
-<script src="https://www.youtube.com/iframe_api"></script>
 <script>
-let leftPlayer, rightPlayer;
-let leftVideoId = null, rightVideoId = null;
-let leftReady=false, rightReady=false;
-let fadeInterval = null;
-let autoCheckInterval = null;
+// ----- PWA Service Worker Registration -----
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(function(reg) {
+      console.log('Service Worker Registered!', reg);
+    });
+}
 
-let leftPlayTriggered = false;
-let rightPlayTriggered = false;
-let leftFadeTriggered = false;
-let rightFadeTriggered = false;
-
-const PLAY_THRESHOLD = 15;
-const FADE_THRESHOLD = 10;
-
-// Title color change logic
-const title = document.querySelector('h1');
-const colors = ['#60a5fa', '#34d399', '#facc15', '#a78bfa', '#ff5f5f'];
-let colorIndex = 0;
-
-setInterval(() => {
-    title.style.color = colors[colorIndex];
-    colorIndex = (colorIndex + 1) % colors.length;
-}, 5000);
-
-// Priming function to force API to get video duration
-function primeVideo(player, side) {
-  if (player && player.getPlayerState() !== YT.PlayerState.PLAYING) {
-    player.playVideo();
-    setTimeout(() => {
-      player.pauseVideo();
-      updateStatus(side, 'Primed');
-    }, 100);
+// ----- Translations -----
+const translations = {
+  hi: {
+    mainHeading: "🚜 ट्रैक्टर वर्क लॉगर + ₹25/मिनट",
+    newActivity: "➕ नई एक्टिविटी",
+    start: "▶ शुरू करें",
+    stop: "⏹ रोकें",
+    clear: "🗑 डेटा साफ करें",
+    activity: "एक्टिविटी",
+    date: "तारीख",
+    startTime: "शुरू",
+    stopTime: "रोकें",
+    totalTime: "कुल समय",
+    payment: "पेमेंट (₹)",
+    delete: "मिटाएँ",
+    summaryRow: "पिछली एक्टिविटी का कुल समय: {H} घण्टा {M} मिनट | Amount: ₹{P}",
+    totalSummary: "कुल समय: {H} घण्टा {M} मिनट | कुल पेमेंट: ₹{P}",
+    pleaseCreate: "पहले नई एक्टिविटी बनाएं!",
+    pleaseStop: "पहले Stop दबाएं!",
+    pleaseStart: "पहले Start दबाइए!",
+    entryDelQ: "क्या ये एंट्री मिटानी है?",
+    allDelQ: "सारा डेटा मिटाना है?"
+  },
+  en: {
+    mainHeading: "🚜 Tractor Work Logger + ₹25/min",
+    newActivity: "➕ New Activity",
+    start: "▶ Start",
+    stop: "⏹ Stop",
+    clear: "🗑 Clear Data",
+    activity: "Activity",
+    date: "Date",
+    startTime: "Start",
+    stopTime: "Stop",
+    totalTime: "Total Time",
+    payment: "Payment (₹)",
+    delete: "Delete",
+    summaryRow: "Previous Activity Total Time: {H} hour {M} minute | Amount: ₹{P}",
+    totalSummary: "Total Time: {H} hour {M} minute | Total Payment: ₹{P}",
+    pleaseCreate: "Please create a new Activity first!",
+    pleaseStop: "Press Stop first!",
+    pleaseStart: "Press Start first!",
+    entryDelQ: "Delete this entry?",
+    allDelQ: "Delete all data?"
   }
-}
+};
 
-// Automatic Crossfade Logic
-function checkAndAutoCrossfade() {
-    // Left Player Check
-    if (leftPlayer && leftReady && leftPlayer.getPlayerState() === YT.PlayerState.PLAYING && leftVideoId) {
-        let duration = leftPlayer.getDuration();
-        if (duration === 0) {
-            primeVideo(leftPlayer, 'left');
-            return;
-        }
-        
-        const remaining = duration - leftPlayer.getCurrentTime();
+let selectedLang = localStorage.getItem("tractorLang") || "hi";
+const RATE_PER_MIN = 25;
+let data = JSON.parse(localStorage.getItem("tractorData") || "[]");
+let startTime = null;
+let currentActivity = data.length-1;
+let currentRowIndex = null;
 
-        // 1. Check for Play Threshold (15 seconds)
-        if (remaining > 0 && remaining <= PLAY_THRESHOLD && rightVideoId && !rightPlayTriggered) {
-            playRightVideo();
-            rightPlayTriggered = true;
-        }
-
-        // 2. Check for Fade Threshold (10 seconds)
-        if (remaining > 0 && remaining <= FADE_THRESHOLD && cross.value !== "100" && !leftFadeTriggered) {
-            smoothCrossfade(100);
-            leftFadeTriggered = true;
-        }
+// --- On load: reload-safe startTime ---
+window.onload = function() {
+  renderTexts();
+  const storedStart = localStorage.getItem("tractorStartTime");
+  if(storedStart) {
+    startTime = new Date(storedStart);
+    let activityIdx = localStorage.getItem("tractorStartActivity");
+    if(activityIdx !== null) currentActivity = parseInt(activityIdx);
+    if(currentActivity!=null && data[currentActivity] && data[currentActivity].logs.length>0) {
+      currentRowIndex = data[currentActivity].logs.length-1;
     }
-
-    // Right Player Check
-    if (rightPlayer && rightReady && rightPlayer.getPlayerState() === YT.PlayerState.PLAYING && rightVideoId) {
-        let duration = rightPlayer.getDuration();
-        if (duration === 0) {
-            primeVideo(rightPlayer, 'right');
-            return;
-        }
-
-        const remaining = duration - rightPlayer.getCurrentTime();
-
-        // 1. Check for Play Threshold (15 seconds)
-        if (remaining > 0 && remaining <= PLAY_THRESHOLD && leftVideoId && !leftPlayTriggered) {
-            playLeftVideo();
-            leftPlayTriggered = true;
-        }
-
-        // 2. Check for Fade Threshold (10 seconds)
-        if (remaining > 0 && remaining <= FADE_THRESHOLD && cross.value !== "0" && !rightFadeTriggered) {
-            smoothCrossfade(0);
-            rightFadeTriggered = true;
-        }
-    }
-}
-
-function startAutoCheck() {
-    if (autoCheckInterval) clearInterval(autoCheckInterval);
-    leftPlayTriggered = false;
-    rightPlayTriggered = false;
-    leftFadeTriggered = false;
-    rightFadeTriggered = false;
-    autoCheckInterval = setInterval(checkAndAutoCrossfade, 1000);
-}
-
-function stopAutoCheck() {
-    if (autoCheckInterval) clearInterval(autoCheckInterval);
-    autoCheckInterval = null;
-}
-
-function onYouTubeIframeAPIReady(){
-  leftPlayer = new YT.Player('leftPlayerWrap', {
-    height: '100%',
-    width: '100%',
-    playerVars:{'controls':1,'rel':0,'modestbranding':1,'playsinline':1},
-    events:{
-      'onReady': (e)=>{ 
-          leftReady=true; 
-          updateStatus('left','Ready'); 
-      },
-      'onStateChange': (e)=>{ }
-    }
-  });
-
-  rightPlayer = new YT.Player('rightPlayerWrap', {
-    height: '100%',
-    width: '100%',
-    playerVars:{'controls':1,'rel':0,'modestbranding':1,'playsinline':1},
-    events:{
-      'onReady': (e)=>{ rightReady=true; updateStatus('right','Ready'); },
-      'onStateChange': (e)=>{ }
-    }
-  });
-}
-
-function extractVideoID(url){
-  if(!url) return null;
-  const idOnly = url.match(/^[A-Za-z0-9_-]{11}$/);
-  if(idOnly) return idOnly[0];
-  const reg = [
-    /v=([A-Za-z0-9_-]{11})/,
-    /youtu\.be\/([A-Za-z0-9_-]{11})/,
-    /\/embed\/([A-Za-z0-9_-]{11})/,
-    /shorts\/([A-Za-z0-9_-]{11})/
-  ];
-  for(let r of reg){
-    const m = url.match(r);
-    if(m && m[1]) return m[1];
-  }
-  return null;
-}
-
-document.getElementById('loadLeftBtn').addEventListener('click', ()=>{
-  const url = document.getElementById('leftUrl').value.trim();
-  const id = extractVideoID(url);
-  if(!id){ alert('Invalid left YouTube URL/ID'); return; }
-  leftVideoId = id;
-  if(leftPlayer && leftReady){
-    leftPlayer.cueVideoById({videoId:id, startSeconds:0, suggestedQuality: 'tiny'}); 
-    applyCrossfade(); 
-    updateStatus('left','Loaded');
-    primeVideo(leftPlayer, 'left'); 
-    leftPlayTriggered = false;
-    rightPlayTriggered = false;
-    leftFadeTriggered = false;
-    rightFadeTriggered = false;
+    document.getElementById("startBtn").disabled = true;
+    document.getElementById("stopBtn").disabled = false;
   } else {
-    setTimeout(()=>{ document.getElementById('loadLeftBtn').click(); }, 300);
+    startTime = null;
+    currentRowIndex = null;
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("stopBtn").disabled = true;
   }
-});
+  loadLogs();
+};
 
-document.getElementById('loadRightBtn').addEventListener('click', ()=>{
-  const url = document.getElementById('rightUrl').value.trim();
-  const id = extractVideoID(url);
-  if(!id){ alert('Invalid right YouTube URL/ID'); return; }
-  rightVideoId = id;
-  if(rightPlayer && rightReady){
-    rightPlayer.cueVideoById({videoId:id, startSeconds:0, suggestedQuality: 'tiny'}); 
-    applyCrossfade(); 
-    updateStatus('right','Loaded');
-    primeVideo(rightPlayer, 'right');
-    leftPlayTriggered = false;
-    rightPlayTriggered = false;
-    leftFadeTriggered = false;
-    rightFadeTriggered = false;
-  } else {
-    setTimeout(()=>{ document.getElementById('loadRightBtn').click(); }, 300);
-  }
-});
+const table = document.getElementById("logTable");
+const summaryDiv = document.getElementById("summary");
 
-document.getElementById('leftUrl').addEventListener('input', (event) => {
-    const url = event.target.value.trim();
-    if (extractVideoID(url)) {
-        document.getElementById('loadLeftBtn').click();
-    }
-});
-
-document.getElementById('rightUrl').addEventListener('input', (event) => {
-    const url = event.target.value.trim();
-    if (extractVideoID(url)) {
-        document.getElementById('loadRightBtn').click();
-    }
-});
-
-document.getElementById('playLeft').addEventListener('click', ()=>{
-  playLeftVideo();
-});
-document.getElementById('pauseLeft').addEventListener('click', ()=>{ 
-    if(leftPlayer) { 
-        leftPlayer.pauseVideo(); 
-        updateStatus('left','Paused');
-        stopAutoCheck();
-    }
-});
-
-document.getElementById('playRight').addEventListener('click', ()=>{
-    playRightVideo();
-});
-document.getElementById('pauseRight').addEventListener('click', ()=>{ 
-    if(rightPlayer) { 
-        rightPlayer.pauseVideo(); 
-        updateStatus('right','Paused');
-        stopAutoCheck();
-    }
-});
-
-function playLeftVideo() {
-  if (leftPlayer && leftVideoId) {
-    leftPlayer.playVideo();
-    applyCrossfade();
-    updateStatus('left', 'Playing');
-    startAutoCheck();
-  }
+function t(key, vars) {
+  let str = translations[selectedLang][key] || key;
+  if(vars) for(let k in vars) str = str.replace(`{${k}}`, vars[k]);
+  return str;
+}
+function autoActivityName() {
+  return selectedLang === "hi" ? `एक्टिविटी ${data.length + 1}` : `Activity ${data.length + 1}`;
+}
+function formatTime(d) {
+  return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
 
-function playRightVideo() {
-  if (rightPlayer && rightVideoId) {
-    rightPlayer.playVideo();
-    applyCrossfade();
-    updateStatus('right', 'Playing');
-    startAutoCheck();
-  }
+function renderTexts() {
+  document.getElementById("mainHeading").innerText = t("mainHeading");
+  document.getElementById("newActBtn").innerText = t("newActivity");
+  document.getElementById("startBtn").innerText = t("start");
+  document.getElementById("stopBtn").innerText = t("stop");
+  document.getElementById("clearBtn").innerText = t("clear");
+  renderTableHeadings();
+}
+function renderTableHeadings() {
+  let ths = table.rows[0].cells;
+  ths[0].innerText = t("activity");
+  ths[1].innerText = t("date");
+  ths[2].innerText = t("startTime");
+  ths[3].innerText = t("stopTime");
+  ths[4].innerText = t("totalTime");
+  ths[5].innerText = t("payment");
+  ths[6].innerText = t("delete");
 }
 
-document.getElementById('playBoth').addEventListener('click', ()=>{
-  if(leftPlayer && leftVideoId){ playLeftVideo(); }
-  if(rightPlayer && rightVideoId){ playRightVideo(); }
-  applyCrossfade(); 
-});
+function loadLogs() {
+  renderTableHeadings();
+  while(table.rows.length > 1) table.deleteRow(1);
 
-document.getElementById('pauseBoth').addEventListener('click', ()=>{
-  if(leftPlayer) leftPlayer.pauseVideo();
-  if(rightPlayer) rightPlayer.pauseVideo();
-  updateStatus('left','Paused'); updateStatus('right','Paused');
-  stopAutoCheck();
-});
-
-document.getElementById('swapLR').addEventListener('click', ()=>{
-  const leftInput = document.getElementById('leftUrl');
-  const rightInput = document.getElementById('rightUrl');
-  const a = leftInput.value; leftInput.value = rightInput.value; rightInput.value = a;
-
-  const tmpId = leftVideoId; leftVideoId = rightVideoId; rightVideoId = tmpId;
-
-  if(leftVideoId && leftPlayer){ leftPlayer.cueVideoById({videoId: leftVideoId, suggestedQuality: 'tiny'}); }
-  if(rightVideoId && rightPlayer){ rightPlayer.cueVideoById({videoId: rightVideoId, suggestedQuality: 'tiny'}); }
-  updateStatus('left','Swapped'); updateStatus('right','Swapped');
-});
-
-const cross = document.getElementById('crossfade');
-cross.addEventListener('input', applyCrossfade);
-function applyCrossfade(){
-  const val = parseInt(cross.value,10);
-  const leftVol = Math.round(100 - val);
-  const rightVol = Math.round(val);
-  if(leftPlayer && leftReady){ leftPlayer.setVolume(leftVol); document.getElementById('leftVolLabel').textContent = leftVol; }
-  if(rightPlayer && rightReady){ rightPlayer.setVolume(rightVol); document.getElementById('rightVolLabel').textContent = rightVol; }
-}
-
-function smoothCrossfade(targetValue) {
-    if (fadeInterval) clearInterval(fadeInterval);
-    const cross = document.getElementById('crossfade');
-    let currentValue = parseInt(cross.value, 10);
-    const step = (currentValue < targetValue) ? 1 : -1;
-
-    fadeInterval = setInterval(() => {
-        currentValue += step;
-        if ( (step === 1 && currentValue >= targetValue) || (step === -1 && currentValue <= targetValue) ) {
-            currentValue = targetValue;
-            clearInterval(fadeInterval);
+  // ---- REVERSE ORDER LOOP ----
+  for(let actIdx = data.length - 1; actIdx >= 0; actIdx--) {
+    let act = data[actIdx];
+    let actTotalMins = 0, actTotalPay = 0;
+    act.logs.forEach((log, logIdx)=>{
+      const row = table.insertRow();
+      row.insertCell(0).innerText = act.activity;
+      row.insertCell(1).innerText = log.date;
+      row.insertCell(2).innerText = log.start;
+      row.insertCell(3).innerText = log.stop || "";
+      row.insertCell(4).innerText = log.total || "";
+      row.insertCell(5).innerText = log.payment || "";
+      let delCell = row.insertCell(6);
+      let btn = document.createElement("button");
+      btn.innerText = t("delete");
+      btn.onclick = function() {
+        if(confirm(t("entryDelQ"))) {
+          act.logs.splice(logIdx,1);
+          localStorage.setItem("tractorData", JSON.stringify(data));
+          loadLogs();
         }
-        cross.value = currentValue;
-        applyCrossfade();
-    }, 20);
-}
+      };
+      delCell.appendChild(btn);
 
-function smoothCrossfadeLeft() {
-    smoothCrossfade(0);
-}
-
-function smoothCrossfadeRight() {
-    smoothCrossfade(100);
-}
-
-function seekVideo(side, seconds) {
-    let player;
-    if (side === 'left') player = leftPlayer;
-    else player = rightPlayer;
-
-    if (!player) return;
-
-    if (seconds === 'reset') {
-        player.seekTo(0, true);
-    } else {
-        const currentTime = player.getCurrentTime();
-        player.seekTo(currentTime + seconds, true);
+      if(log.payment) {
+        let mins = Math.ceil(log.payment/RATE_PER_MIN);
+        actTotalMins += mins;
+        actTotalPay += log.payment;
+      }
+    });
+    if(act.logs.length>0) {
+      let sumRow = table.insertRow();
+      sumRow.className = "summary-row";
+      let cell = sumRow.insertCell(0);
+      cell.colSpan = 7;
+      let hrs = Math.floor(actTotalMins/60);
+      let mins = actTotalMins%60;
+      let summaryRowText = t("summaryRow", {H:hrs, M:mins, P:actTotalPay});
+      cell.innerHTML = summaryRowText;
     }
+    let hrRow = table.insertRow();
+    hrRow.className = "hr-row";
+    let cell2 = hrRow.insertCell(0);
+    cell2.colSpan = 7;
+    cell2.innerHTML = "";
+  }
+
+  let totalMins = 0;
+  let totalPay = 0;
+  data.forEach(act=>{
+    act.logs.forEach(log=>{
+      if(log.payment) {
+        let mins = Math.ceil(log.payment/RATE_PER_MIN);
+        totalMins += mins;
+        totalPay += log.payment;
+      }
+    });
+  });
+  let hrs = Math.floor(totalMins/60);
+  let mins = totalMins%60;
+  let summaryStr = t("totalSummary", {H:hrs, M:mins, P:totalPay});
+  summaryDiv.innerText = summaryStr;
 }
 
-function updateStatus(side, text){
-  if(side==='left') document.getElementById('leftStatus').textContent = text;
-  else document.getElementById('rightStatus').textContent = text;
+// --- New Activity ---
+document.getElementById("newActBtn").onclick = ()=>{
+  if(currentActivity!==null && startTime) finishActivity();
+  data.push({activity: autoActivityName(), logs:[]});
+  localStorage.setItem("tractorData", JSON.stringify(data));
+  currentActivity = data.length-1;
+  startTime = null;
+  currentRowIndex = null;
+  localStorage.removeItem("tractorStartTime");
+  localStorage.removeItem("tractorStartActivity");
+  document.getElementById("startBtn").disabled = false;
+  document.getElementById("stopBtn").disabled = true;
+  loadLogs();
+};
+
+// --- Start Button ---
+document.getElementById("startBtn").onclick = ()=>{
+  if(currentActivity===null) return alert(t("pleaseCreate"));
+  if(startTime) return alert(t("pleaseStop"));
+  startTime = new Date();
+  localStorage.setItem("tractorStartTime", startTime.toISOString());
+  localStorage.setItem("tractorStartActivity", currentActivity);
+  const log = {
+    date: new Date().toLocaleDateString(selectedLang==="hi"?"hi-IN":"en-GB"),
+    start: formatTime(startTime),
+    stop: "",
+    total: "",
+    payment: ""
+  };
+  data[currentActivity].logs.push(log);
+  currentRowIndex = data[currentActivity].logs.length-1;
+  localStorage.setItem("tractorData", JSON.stringify(data));
+  document.getElementById("startBtn").disabled = true;
+  document.getElementById("stopBtn").disabled = false;
+  loadLogs();
+};
+
+// --- Stop Button ---
+document.getElementById("stopBtn").onclick = ()=>{
+  if(currentActivity===null) return alert(t("pleaseCreate"));
+  if(!startTime) return alert(t("pleaseStart"));
+  finishActivity();
+  localStorage.removeItem("tractorStartTime");
+  localStorage.removeItem("tractorStartActivity");
+  startTime = null;
+  currentRowIndex = null;
+  document.getElementById("startBtn").disabled = false;
+  document.getElementById("stopBtn").disabled = true;
+  loadLogs();
+};
+
+function finishActivity() {
+  const stopTime = new Date();
+  const diffMs = stopTime - startTime;
+  const totalMins = Math.ceil(diffMs/(1000*60));
+  const hrs = Math.floor(totalMins/60);
+  const mins = totalMins%60;
+  let totalStr;
+  if(selectedLang === "hi") {
+    totalStr = `${hrs} घण्टा ${mins} मिनट`;
+  } else {
+    totalStr = `${hrs} hour ${mins} minute`;
+  }
+  const payment = totalMins*RATE_PER_MIN;
+
+  const log = data[currentActivity].logs[currentRowIndex];
+  log.stop = formatTime(stopTime);
+  log.total = totalStr;
+  log.payment = payment;
+
+  localStorage.setItem("tractorData", JSON.stringify(data));
 }
 
-window.addEventListener('load', ()=>{ 
-    applyCrossfade(); 
-    updateStatus('left','Idle'); 
-    updateStatus('right','Idle'); 
-});
+// --- Clear Activity ---
+document.getElementById("clearBtn").onclick = ()=>{
+  if(currentActivity===null) return alert(t("pleaseCreate"));
+  if(confirm(t("allDelQ"))) {
+    data[currentActivity].logs = [];
+    localStorage.setItem("tractorData", JSON.stringify(data));
+    loadLogs();
+  }
+};
+
+// --- Language Change ---
+document.getElementById('langSel').value = selectedLang;
+document.getElementById('langSel').onchange = function() {
+  selectedLang = this.value;
+  localStorage.setItem("tractorLang", selectedLang);
+  renderTexts();
+  loadLogs();
+};
+
+renderTexts();
 </script>
 </body>
 </html>
