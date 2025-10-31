@@ -1,363 +1,346 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚜 Tractor Time Logger + Multi Activity</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#047857">
-<link rel="icon" href="icon-192.png">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flying Modi 😎</title>
 <style>
-/* ...same CSS as previous version... */
-body {
-  font-family: 'Segoe UI', sans-serif;
-  text-align: center;
-  margin: 20px;
-  background: #f0fdf4;
-}
-h2 { color: #047857; }
-button, select {
-  padding: 10px 18px;
-  margin: 5px;
-  font-size: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-#startBtn { background: #10b981; color: white; }
-#stopBtn { background: #ef4444; color: white; }
-#newActBtn { background: #3b82f6; color: white; }
-#clearBtn { background: #f59e0b; color: white; }
-#langSel { float: right; margin-top: -40px; }
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  background: #fff;
-}
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-th { background: #d1fae5; }
-.summary-row td {
-  background: #e0e7ff;
-  font-weight: bold;
-  text-align: left;
-  border: none;
-}
-.hr-row td {
-  border-top: 2px solid #111;
-  border-bottom: none;
-  border-left: none;
-  border-right: none;
-  padding: 0;
-  height: 2px;
-  background: none;
-}
-#summary { margin-top: 15px; font-size: 17px; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, #00c6ff, #0072ff);
+    font-family: 'Arial', sans-serif;
+  }
+
+  canvas {
+    display: block;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #00c6ff, #0072ff);
+  }
+
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-weight: bold;
+    color: #fff;
+    font-size: 20px;
+    z-index: 10;
+  }
+
+  #restart {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%);
+    background: #ff5252;
+    color: #fff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-size: 20px;
+    display: none;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  }
+
+  /* 🎮 Game Over Developer Name */
+  #gameover-dev {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 1s ease-in;
+    z-index: 21;
+  }
+
+  /* --- Splash Screen --- */
+  #splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #1e3c72, #2a5298);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.5s ease-out;
+    opacity: 1;
+    z-index: 100;
+  }
+
+  #splash-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #splash-content {
+    padding: 20px;
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    animation: pulse 1.5s infinite;
+  }
+
+  h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+    letter-spacing: 1.5px;
+  }
+
+  p {
+    font-size: 16px;
+    margin-top: 5px;
+    opacity: 0.8;
+  }
+
+  #tap-to-start {
+    margin-top: 40px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffeb3b;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+
+  /* --- Developer Logo Scrolling Animation --- */
+  #developer-logo {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  #developer-logo span {
+    display: inline-block;
+    animation: move-text 10s linear infinite;
+    background: linear-gradient(90deg, #ff3cac, #784ba0, #2b86c5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+  }
+
+  @keyframes move-text {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
 </style>
 </head>
 <body>
 
-<select id="langSel">
-  <option value="hi">🇮🇳 हिन्दी</option>
-  <option value="en">🇬🇧 English</option>
-</select>
+<div id="splash-screen">
+  <div id="splash-content">
+    <h1>Welcome to Flying Modi Game 🎯</h1>
+    <p>Developer @kannu_jaat_03</p>
+  </div>
+  <div id="tap-to-start">Tap or Click to Start</div>
+</div>
 
-<h2 id="mainHeading">🚜 ट्रैक्टर वर्क लॉगर + ₹25/मिनट</h2>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
 
-<button id="newActBtn"></button>
-<button id="startBtn"></button>
-<button id="stopBtn"></button>
-<button id="clearBtn"></button>
+<div id="score">Score: 0</div>
+<button id="restart">Game Over 😅 – Restart</button>
+<div id="gameover-dev">🎮 Developer: @kannu_jaat_03 💚💪</div>
 
-<table id="logTable">
-  <tr>
-    <th></th><th></th><th></th><th></th><th></th><th></th><th></th>
-  </tr>
-</table>
+<div id="developer-logo">
+  <span>🎮 Developer: @kannu_jaat_03 💚💪</span>
+</div>
 
-<div id="summary"></div>
+<audio id="flySound" src="https://files.catbox.moe/ga8bef.m4a" loop></audio>
+<audio id="crashSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
 <script>
-// ----- PWA Service Worker Registration -----
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js')
-    .then(function(reg) {
-      console.log('Service Worker Registered!', reg);
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const restartBtn = document.getElementById("restart");
+const scoreDisplay = document.getElementById("score");
+const splashScreen = document.getElementById("splash-screen");
+const gameOverDev = document.getElementById("gameover-dev");
+
+const flySound = document.getElementById("flySound");
+const crashSound = document.getElementById("crashSound");
+
+const modiImg = new Image();
+modiImg.src = "https://i.ibb.co/1f67Kk22/flying-modi.png";
+
+const rahulImg = new Image();
+rahulImg.src = "https://i.ibb.co/Lzxc434J/rahul-poster.png";
+
+let modiX = 50;
+let modiY = 300;
+let velocity = 0;
+const gravity = 0.5;
+const lift = -8;
+let canFlap = true;
+let gameOver = false;
+let gameStarted = false; 
+let obstacles = [];
+let score = 0;
+let crashAngle = 0;
+let soundStarted = false; 
+
+function setup() {
+  obstacles = [];
+  for (let i = 0; i < 3; i++) {
+    const side = Math.random() > 0.5 ? "top" : "bottom";
+    const y = side === "top" ? 0 : 450;
+    const angle = (Math.random() * 0.5 - 0.25);
+    obstacles.push({
+      x: 400 + i * 220,
+      y,
+      side,
+      width: 80,
+      height: 140,
+      angle
     });
+  }
 }
 
-// ----- Translations -----
-const translations = {
-  hi: {
-    mainHeading: "🚜 ट्रैक्टर वर्क लॉगर + ₹25/मिनट",
-    newActivity: "➕ नई एक्टिविटी",
-    start: "▶ शुरू करें",
-    stop: "⏹ रोकें",
-    clear: "🗑 डेटा साफ करें",
-    activity: "एक्टिविटी",
-    date: "तारीख",
-    startTime: "शुरू",
-    stopTime: "रोकें",
-    totalTime: "कुल समय",
-    payment: "पेमेंट (₹)",
-    delete: "मिटाएँ",
-    summaryRow: "पिछली एक्टिविटी का कुल समय: {H} घण्टा {M} मिनट | Amount: ₹{P}",
-    totalSummary: "कुल समय: {H} घण्टा {M} मिनट | कुल पेमेंट: ₹{P}",
-    pleaseCreate: "पहले नई एक्टिविटी बनाएं!",
-    pleaseStop: "पहले Stop दबाएं!",
-    pleaseStart: "पहले Start दबाइए!",
-    entryDelQ: "क्या ये एंट्री मिटानी है?",
-    allDelQ: "सारा डेटा मिटाना है?"
-  },
-  en: {
-    mainHeading: "🚜 Tractor Work Logger + ₹25/min",
-    newActivity: "➕ New Activity",
-    start: "▶ Start",
-    stop: "⏹ Stop",
-    clear: "🗑 Clear Data",
-    activity: "Activity",
-    date: "Date",
-    startTime: "Start",
-    stopTime: "Stop",
-    totalTime: "Total Time",
-    payment: "Payment (₹)",
-    delete: "Delete",
-    summaryRow: "Previous Activity Total Time: {H} hour {M} minute | Amount: ₹{P}",
-    totalSummary: "Total Time: {H} hour {M} minute | Total Payment: ₹{P}",
-    pleaseCreate: "Please create a new Activity first!",
-    pleaseStop: "Press Stop first!",
-    pleaseStart: "Press Start first!",
-    entryDelQ: "Delete this entry?",
-    allDelQ: "Delete all data?"
-  }
-};
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-let selectedLang = localStorage.getItem("tractorLang") || "hi";
-const RATE_PER_MIN = 25;
-let data = JSON.parse(localStorage.getItem("tractorData") || "[]");
-let startTime = null;
-let currentActivity = data.length-1;
-let currentRowIndex = null;
+  ctx.save();
+  ctx.translate(modiX + 30, modiY + 30);
+  ctx.rotate(crashAngle);
+  ctx.drawImage(modiImg, -30, -30, 60, 60);
+  ctx.restore();
 
-// --- On load: reload-safe startTime ---
-window.onload = function() {
-  renderTexts();
-  const storedStart = localStorage.getItem("tractorStartTime");
-  if(storedStart) {
-    startTime = new Date(storedStart);
-    let activityIdx = localStorage.getItem("tractorStartActivity");
-    if(activityIdx !== null) currentActivity = parseInt(activityIdx);
-    if(currentActivity!=null && data[currentActivity] && data[currentActivity].logs.length>0) {
-      currentRowIndex = data[currentActivity].logs.length-1;
+  obstacles.forEach(obs => {
+    ctx.save();
+    ctx.translate(obs.x + obs.width / 2, obs.y + (obs.side === "top" ? obs.height : 0));
+    ctx.rotate(obs.angle);
+    const drawY = obs.side === "top" ? -obs.height : 0;
+    ctx.drawImage(rahulImg, -obs.width / 2, drawY, obs.width, obs.height);
+    ctx.restore();
+
+    obs.x -= 2;
+
+    if (obs.x + obs.width < 0) {
+      const lastObsX = obstacles.reduce((max, current) => Math.max(max, current.x), 0);
+      obs.x = lastObsX + 220;
+      obs.side = Math.random() > 0.5 ? "top" : "bottom";
+      obs.y = obs.side === "top" ? 0 : 450;
+      obs.angle = (Math.random() * 0.5 - 0.25);
+      score++;
     }
-    document.getElementById("startBtn").disabled = true;
-    document.getElementById("stopBtn").disabled = false;
-  } else {
-    startTime = null;
-    currentRowIndex = null;
-    document.getElementById("startBtn").disabled = false;
-    document.getElementById("stopBtn").disabled = true;
-  }
-  loadLogs();
-};
 
-const table = document.getElementById("logTable");
-const summaryDiv = document.getElementById("summary");
-
-function t(key, vars) {
-  let str = translations[selectedLang][key] || key;
-  if(vars) for(let k in vars) str = str.replace(`{${k}}`, vars[k]);
-  return str;
-}
-function autoActivityName() {
-  return selectedLang === "hi" ? `एक्टिविटी ${data.length + 1}` : `Activity ${data.length + 1}`;
-}
-function formatTime(d) {
-  return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-}
-
-function renderTexts() {
-  document.getElementById("mainHeading").innerText = t("mainHeading");
-  document.getElementById("newActBtn").innerText = t("newActivity");
-  document.getElementById("startBtn").innerText = t("start");
-  document.getElementById("stopBtn").innerText = t("stop");
-  document.getElementById("clearBtn").innerText = t("clear");
-  renderTableHeadings();
-}
-function renderTableHeadings() {
-  let ths = table.rows[0].cells;
-  ths[0].innerText = t("activity");
-  ths[1].innerText = t("date");
-  ths[2].innerText = t("startTime");
-  ths[3].innerText = t("stopTime");
-  ths[4].innerText = t("totalTime");
-  ths[5].innerText = t("payment");
-  ths[6].innerText = t("delete");
-}
-
-function loadLogs() {
-  renderTableHeadings();
-  while(table.rows.length > 1) table.deleteRow(1);
-
-  // ---- REVERSE ORDER LOOP ----
-  for(let actIdx = data.length - 1; actIdx >= 0; actIdx--) {
-    let act = data[actIdx];
-    let actTotalMins = 0, actTotalPay = 0;
-    act.logs.forEach((log, logIdx)=>{
-      const row = table.insertRow();
-      row.insertCell(0).innerText = act.activity;
-      row.insertCell(1).innerText = log.date;
-      row.insertCell(2).innerText = log.start;
-      row.insertCell(3).innerText = log.stop || "";
-      row.insertCell(4).innerText = log.total || "";
-      row.insertCell(5).innerText = log.payment || "";
-      let delCell = row.insertCell(6);
-      let btn = document.createElement("button");
-      btn.innerText = t("delete");
-      btn.onclick = function() {
-        if(confirm(t("entryDelQ"))) {
-          act.logs.splice(logIdx,1);
-          localStorage.setItem("tractorData", JSON.stringify(data));
-          loadLogs();
-        }
-      };
-      delCell.appendChild(btn);
-
-      if(log.payment) {
-        let mins = Math.ceil(log.payment/RATE_PER_MIN);
-        actTotalMins += mins;
-        actTotalPay += log.payment;
-      }
-    });
-    if(act.logs.length>0) {
-      let sumRow = table.insertRow();
-      sumRow.className = "summary-row";
-      let cell = sumRow.insertCell(0);
-      cell.colSpan = 7;
-      let hrs = Math.floor(actTotalMins/60);
-      let mins = actTotalMins%60;
-      let summaryRowText = t("summaryRow", {H:hrs, M:mins, P:actTotalPay});
-      cell.innerHTML = summaryRowText;
-    }
-    let hrRow = table.insertRow();
-    hrRow.className = "hr-row";
-    let cell2 = hrRow.insertCell(0);
-    cell2.colSpan = 7;
-    cell2.innerHTML = "";
-  }
-
-  let totalMins = 0;
-  let totalPay = 0;
-  data.forEach(act=>{
-    act.logs.forEach(log=>{
-      if(log.payment) {
-        let mins = Math.ceil(log.payment/RATE_PER_MIN);
-        totalMins += mins;
-        totalPay += log.payment;
-      }
-    });
+    const modiBox = { x: modiX, y: modiY, w: 60, h: 60 };
+    const rahulBox = { x: obs.x, y: obs.y, w: obs.width, h: obs.height };
+    if (isColliding(modiBox, rahulBox)) endGame();
   });
-  let hrs = Math.floor(totalMins/60);
-  let mins = totalMins%60;
-  let summaryStr = t("totalSummary", {H:hrs, M:mins, P:totalPay});
-  summaryDiv.innerText = summaryStr;
+
+  velocity += gravity;
+  modiY += velocity;
+  if (modiY > canvas.height - 60 || modiY < 0) endGame();
+
+  scoreDisplay.innerText = "Score: " + score;
+
+  if (!gameOver) requestAnimationFrame(draw);
+  else crashAngle += 0.1;
 }
 
-// --- New Activity ---
-document.getElementById("newActBtn").onclick = ()=>{
-  if(currentActivity!==null && startTime) finishActivity();
-  data.push({activity: autoActivityName(), logs:[]});
-  localStorage.setItem("tractorData", JSON.stringify(data));
-  currentActivity = data.length-1;
-  startTime = null;
-  currentRowIndex = null;
-  localStorage.removeItem("tractorStartTime");
-  localStorage.removeItem("tractorStartActivity");
-  document.getElementById("startBtn").disabled = false;
-  document.getElementById("stopBtn").disabled = true;
-  loadLogs();
-};
-
-// --- Start Button ---
-document.getElementById("startBtn").onclick = ()=>{
-  if(currentActivity===null) return alert(t("pleaseCreate"));
-  if(startTime) return alert(t("pleaseStop"));
-  startTime = new Date();
-  localStorage.setItem("tractorStartTime", startTime.toISOString());
-  localStorage.setItem("tractorStartActivity", currentActivity);
-  const log = {
-    date: new Date().toLocaleDateString(selectedLang==="hi"?"hi-IN":"en-GB"),
-    start: formatTime(startTime),
-    stop: "",
-    total: "",
-    payment: ""
-  };
-  data[currentActivity].logs.push(log);
-  currentRowIndex = data[currentActivity].logs.length-1;
-  localStorage.setItem("tractorData", JSON.stringify(data));
-  document.getElementById("startBtn").disabled = true;
-  document.getElementById("stopBtn").disabled = false;
-  loadLogs();
-};
-
-// --- Stop Button ---
-document.getElementById("stopBtn").onclick = ()=>{
-  if(currentActivity===null) return alert(t("pleaseCreate"));
-  if(!startTime) return alert(t("pleaseStart"));
-  finishActivity();
-  localStorage.removeItem("tractorStartTime");
-  localStorage.removeItem("tractorStartActivity");
-  startTime = null;
-  currentRowIndex = null;
-  document.getElementById("startBtn").disabled = false;
-  document.getElementById("stopBtn").disabled = true;
-  loadLogs();
-};
-
-function finishActivity() {
-  const stopTime = new Date();
-  const diffMs = stopTime - startTime;
-  const totalMins = Math.ceil(diffMs/(1000*60));
-  const hrs = Math.floor(totalMins/60);
-  const mins = totalMins%60;
-  let totalStr;
-  if(selectedLang === "hi") {
-    totalStr = `${hrs} घण्टा ${mins} मिनट`;
-  } else {
-    totalStr = `${hrs} hour ${mins} minute`;
-  }
-  const payment = totalMins*RATE_PER_MIN;
-
-  const log = data[currentActivity].logs[currentRowIndex];
-  log.stop = formatTime(stopTime);
-  log.total = totalStr;
-  log.payment = payment;
-
-  localStorage.setItem("tractorData", JSON.stringify(data));
+function isColliding(a, b) {
+  return (
+    a.x < b.x + b.w &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.h &&
+    a.y + a.h > b.y
+  );
 }
 
-// --- Clear Activity ---
-document.getElementById("clearBtn").onclick = ()=>{
-  if(currentActivity===null) return alert(t("pleaseCreate"));
-  if(confirm(t("allDelQ"))) {
-    data[currentActivity].logs = [];
-    localStorage.setItem("tractorData", JSON.stringify(data));
-    loadLogs();
+function flap() {
+  if (!gameOver && canFlap) {
+    velocity = lift;
+    canFlap = false;
+    setTimeout(() => (canFlap = true), 250);
   }
+}
+
+function endGame() {
+  if (!gameOver) {
+    flySound.pause();
+    crashSound.currentTime = 0;
+    crashSound.play();
+  }
+  gameOver = true;
+  restartBtn.style.display = "block";
+  gameOverDev.style.opacity = 1; // 🎮 Developer name दिखाओ
+}
+
+restartBtn.onclick = () => {
+  gameOver = false;
+  modiY = 300;
+  velocity = 0;
+  score = 0;
+  crashAngle = 0;
+  setup();
+  restartBtn.style.display = "none";
+  gameOverDev.style.opacity = 0; // फिर से छिपाओ
+  flySound.currentTime = 0;
+  flySound.play().catch(()=>{});
+  draw();
 };
 
-// --- Language Change ---
-document.getElementById('langSel').value = selectedLang;
-document.getElementById('langSel').onchange = function() {
-  selectedLang = this.value;
-  localStorage.setItem("tractorLang", selectedLang);
-  renderTexts();
-  loadLogs();
-};
+function startSound() {
+  if (!soundStarted) {
+    flySound.muted = false;
+    flySound.loop = true;
+    flySound.currentTime = 0;
+    flySound.play().then(() => {
+      soundStarted = true;
+    }).catch(err => console.log("Autoplay blocked:", err));
+  }
+}
 
-renderTexts();
+function handleInput(e) {
+  if (!gameStarted) {
+    startGame();
+    return;
+  }
+  if (!gameOver) {
+    startSound();
+    flap();
+  }
+  if (e.type === 'touchstart') e.preventDefault();
+}
+
+function startGame() {
+  gameStarted = true;
+  splashScreen.classList.add('hidden');
+  startSound();
+  draw();
+}
+
+window.addEventListener("click", handleInput);
+window.addEventListener("touchstart", handleInput);
+
+setup();
 </script>
 </body>
 </html>
